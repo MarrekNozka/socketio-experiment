@@ -1,0 +1,6 @@
+# config.py
+
+
+class Config(object):
+    SECRET_KEY = b"\xbb'c\x89\x9e\xfd\x96:\xcb*\x9f\xc1}g~\xdc\x9d\x8e\xc7\x80\xcb\x15\x85o"
+    DEBUG = True
