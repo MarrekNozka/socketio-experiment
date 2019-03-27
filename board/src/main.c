@@ -1,5 +1,4 @@
 #include "settings.h"
-#include "lcd.h"
 #include <avr/io.h>
 /*#include <util/delay.h>*/
 #include <stdio.h>
@@ -9,6 +8,11 @@
 int8_t check_status(void);
 
 
+void setupPORT(void)
+{
+    DDRC = 0x00;
+    DDRB = 0xFF;
+}
 void setupUART(void)
 {
     UCSR0B = (1 << RXEN0) | (1 << TXEN0);       // povolí příjem i vysílání
@@ -93,41 +97,24 @@ int main(void)
 {
     stdout = &mystdout;
 
-    /*lcd_init(LCD_ON_CURSOR);*/
-    /*lcd_clrscr();*/
-    /*lcd_home();*/
-    /*lcd_puts("ahoj");*/
     sei();                       //gloválně povolí přerušení
+    setupPORT();
     setupUART();
     setupTIMER();
     while (1) {
-        /*myputs("ahoj\n"); */
-        /*printf("ahoj %d\n", 314); */
-        /*printf("nazdar\n"); */
-        //printf_P(PSTR("ahoj -- %u\n"), i++); //formátovací řetězec je ve FLASH paměti
-
-        /* 
-           int8_t status;
-           status = check_status();
-           if (status == -1 ) {
-           printf_P(PSTR("-- %c\n"), 'A'); //formátovací řetězec je ve FLASH paměti
-           }
-           if (status == 1 ) {
-           printf_P(PSTR("-- %c\n"), 'B'); //formátovací řetězec je ve FLASH paměti
-           }
-           _delay_ms(1);
-         */
 
         if (kolecko_zmena) {
             kolecko_zmena = 0;
             printf("%i\n", kolecko);
             PORTB ^= (1 << PB5);
+            PORTB ^= (1 << PB0);
         }
 
         if (prijem) {
             prijem = 0;
-            printf("OK %c\n", prijaty_znak);
+            /*printf("OK %c\n", prijaty_znak);*/
             PORTB ^= (1 << PB5);
+            PORTB ^= (1 << PB0);
         }
     }
 
