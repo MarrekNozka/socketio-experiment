@@ -84,46 +84,46 @@ vpath %.S $(sort $(dir $(ASM_SOURCES)))
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/EEPROM.hex $(BUILD_DIR)/$(TARGET).lss size
 # create object files from C files
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR)
-	@$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
+	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 # create object files from ASM files
 $(BUILD_DIR)/%.o: %.S Makefile | $(BUILD_DIR)
-	@$(AS) -c $(AFLAGS) $< -o $@
+	$(AS) -c $(AFLAGS) $< -o $@
 # create aplication ELF file
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
-	@$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 # create aplication FLASH intel HEX file
 $(BUILD_DIR)/$(TARGET).hex: $(BUILD_DIR)/$(TARGET).elf
-	@$(HEX) -R .eeprom $< $@
+	$(HEX) -R .eeprom $< $@
 # create aplication EEPROM intel HEX file
 $(BUILD_DIR)/EEPROM.hex: $(BUILD_DIR)/$(TARGET).elf
-	@$(HEX) -j .eeprom --change-section-lma .eeprom=0 $< $@ 2> /dev/null
+	$(HEX) -j .eeprom --change-section-lma .eeprom=0 $< $@ 2> /dev/null
 # disassembly EFL
 $(BUILD_DIR)/$(TARGET).lss: $(BUILD_DIR)/$(TARGET).elf
-	@$(DP) -h -S $< > $@
+	$(DP) -h -S $< > $@
 # create build directory
 $(BUILD_DIR):
-	@mkdir $@
+	mkdir $@
 # prints memory usage tables
 size:
-	@$(WSZ) -e $(BUILD_DIR)/$(TARGET).elf
+	$(WSZ) -e $(BUILD_DIR)/$(TARGET).elf
 # clean up
 clean:
-	@$(RM) $(BUILD_DIR)
+	$(RM) $(BUILD_DIR)
 
 
 #######################################
 # avrdude
 #######################################
 terminal:
-	@$(AVRDUDE) -t
+	$(AVRDUDE) -t
 dump_eeprom:
-	@echo "dump eeprom" | $(AVRDUDE) -t
+	echo "dump eeprom" | $(AVRDUDE) -t
 flash:
-	@$(AVRDUDE) -U flash:w:$(BUILD_DIR)/$(TARGET).elf:e
+	$(AVRDUDE) -U flash:w:$(BUILD_DIR)/$(TARGET).elf:e
 flash_all:
-	@$(AVRDUDE) -U flash:w:$(BUILD_DIR)/$(TARGET).elf:e -U eeprom:w:$(BUILD_DIR)/$(TARGET).elf:e
+	$(AVRDUDE) -U flash:w:$(BUILD_DIR)/$(TARGET).elf:e -U eeprom:w:$(BUILD_DIR)/$(TARGET).elf:e
 chip_test:
-	@$(AVRDUDE)
+	$(AVRDUDE)
 build_and_flash: all flash
 
 
@@ -131,7 +131,7 @@ build_and_flash: all flash
 # miniterm
 #######################################
 miniterm:
-	@$(MINITERM)
+	$(MINITERM)
 
 
 #######################################

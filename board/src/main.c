@@ -1,6 +1,7 @@
 #include "settings.h"
+#include "lcd.h"
 #include <avr/io.h>
-#include <util/delay.h>
+/*#include <util/delay.h>*/
 #include <stdio.h>
 #include <avr/pgmspace.h>       // chceme pracovat s řetězci ve flash paměti
 #include <avr/interrupt.h>      // chceme pracovat s řetězci ve flash paměti
@@ -10,10 +11,10 @@ int8_t check_status(void);
 
 void setupUART(void)
 {
-    UCSR0B |= 1 << TXEN0;
-    UCSR0B |= _BV(TXEN0);       // todle je makro na ten řádek o jedno nahoře
-    UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);
-    UBRR0 = 103;                // nastavení přenosové rychlosti
+    UCSR0B = (1 << RXEN0) | (1 << TXEN0);       // povolí příjem i vysílání
+    UCSR0C |= (1 << UCSZ00) | (1 << UCSZ01);    // 8-b znaky
+    UBRR0 = 103;                // nastavení přenosové rychlosti, závisí na frekvenci
+    UCSR0B |= (1<< RXCIE0); // povolí přerušení při příjmu
 }
 
 void setupTIMER(void)
@@ -24,20 +25,6 @@ void setupTIMER(void)
     TCCR0A = (1 << WGM01);      // timer je v módu CTC
     TCCR0B = (1 << CS02);       //  nastavím zdroj Cloku s předděličkou 256
     // to co se v dokumentaci jmenuje CA02 se ve skutečnosti jmenuje CS02
-}
-
-volatile int16_t kolecko = 0;
-volatile int8_t kolecko_zmena = 0;
-
-ISR(TIMER0_COMPA_vect)
-{
-    // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html
-    int8_t status;
-    status = check_status();
-    if (status) {
-        kolecko += status;
-        kolecko_zmena = 1;
-    }
 }
 
 
@@ -97,16 +84,23 @@ int8_t check_status(void)
 
 static FILE mystdout = FDEV_SETUP_STREAM(myputc, NULL, _FDEV_SETUP_WRITE);
 
+volatile int16_t kolecko = 0;
+volatile int8_t kolecko_zmena = 0;
+volatile char prijaty_znak = 0;
+volatile char prijem = 0;
 
 int main(void)
 {
+    stdout = &mystdout;
+
+    /*lcd_init(LCD_ON_CURSOR);*/
+    /*lcd_clrscr();*/
+    /*lcd_home();*/
+    /*lcd_puts("ahoj");*/
+    sei();                       //gloválně povolí přerušení
     setupUART();
     setupTIMER();
-    sei();                      // gloválně povolí přerušení
-    stdout = &mystdout;
-    /*uint16_t i = 125; */
     while (1) {
-        PORTB ^= (1 << PB5);
         /*myputs("ahoj\n"); */
         /*printf("ahoj %d\n", 314); */
         /*printf("nazdar\n"); */
@@ -127,8 +121,33 @@ int main(void)
         if (kolecko_zmena) {
             kolecko_zmena = 0;
             printf("%i\n", kolecko);
+            PORTB ^= (1 << PB5);
+        }
+
+        if (prijem) {
+            prijem = 0;
+            printf("OK %c\n", prijaty_znak);
+            PORTB ^= (1 << PB5);
         }
     }
 
     return 0;
 }                               /* main */
+
+
+ISR(TIMER0_COMPA_vect)
+{
+    // http://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html
+    int8_t status;
+    status = check_status();
+    if (status) {
+        kolecko += status;
+        kolecko_zmena = 1;
+    }
+}
+
+ISR(USART_RX_vect)
+{
+    prijaty_znak = UDR0;        // Vyčíst přijatá data
+    prijem = 1;       // dej hlavní smyčce info o příchodu nového znaku 
+}
